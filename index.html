@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>F1 Simulator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Formula One Simulator</h1>
+  <div id="race-track"></div>
+  <div class="info-panel" id="car-info-panel"></div>
+  <div id="leaderboard"></div>
+  <script>
+    const raceTrack = document.getElementById("race-track");
+    const carPanel = document.getElementById("car-info-panel");
+    const leaderboard = document.getElementById("leaderboard");
+
+    const totalLaps = 3;
+    const centerX = 300;
+    const centerY = 200;
+    const radius = 165;
+
+    const teams = [
+      { name: 'Ferrari', logo: 'images/ferrari.svg' },
+      { name: 'Red Bull', logo: 'images/redbull.svg' },
+      { name: 'Mercedes', logo: 'images/mercedes.svg' },
+      { name: 'McLaren', logo: 'images/mclaren.svg' },
+      { name: 'Alpine', logo: 'images/alpine.svg' }
+    ];
+
+    const cars = teams.map((team, i) => {
+      const icon = document.createElement("div");
+      icon.className = "car-icon";
+      icon.style.backgroundImage = `url('${team.logo}')`;
+      raceTrack.appendChild(icon);
+
+      const info = document.createElement("div");
+      info.className = "car-info";
+      info.innerHTML = `
+        <div><img src="${team.logo}" width="20"> ${team.name}</div>
+        <div id="status-${i}">Lap 0 | 0s | 0km/h</div>
+      `;
+
+      const progress = document.createElement("div");
+      progress.className = "progress";
+      const bar = document.createElement("div");
+      bar.className = "progress-bar";
+      progress.appendChild(bar);
+      info.appendChild(progress);
+      carPanel.appendChild(info);
+
+      return {
+        id: i,
+        name: team.name,
+        laps: 0,
+        angle: i * 72,
+        totalTime: 0,
+        avgSpeed: 0,
+        iconEl: icon,
+        statusEl: document.getElementById(`status-${i}`),
+        barEl: bar
+      };
+    });
+
+    function updatePosition(car) {
+      const angleRad = (car.angle % 360) * (Math.PI / 180);
+      const x = centerX + radius * Math.cos(angleRad) - 12;
+      const y = centerY + radius * Math.sin(angleRad) - 12;
+      car.iconEl.style.left = `${x}px`;
+      car.iconEl.style.top = `${y}px`;
+    }
+
+    function simulateRace() {
+      const interval = setInterval(() => {
+        let allDone = true;
+
+        cars.forEach(car => {
+          if (car.laps >= totalLaps) return;
+          allDone = false;
+
+          const deltaAngle = Math.random() * 40 + 30;
+          car.angle += deltaAngle;
+
+          if (car.angle >= 360) {
+            car.angle -= 360;
+            car.laps++;
+          }
+
+          const lapTime = Math.random() * 5 + 3;
+          car.totalTime += lapTime;
+          car.avgSpeed = Math.round((5000 * car.laps) / car.totalTime);
+
+          car.statusEl.textContent = `Lap ${car.laps} | ${car.totalTime.toFixed(1)}s | ${car.avgSpeed}km/h`;
+          car.barEl.style.width = `${(car.laps / totalLaps) * 100}%`;
+          updatePosition(car);
+        });
+
+        if (allDone) {
+          clearInterval(interval);
+          cars.sort((a, b) => a.totalTime - b.totalTime);
+          leaderboard.innerHTML = `<h2>🏁 Winner: ${cars[0].name} - Time: ${cars[0].totalTime.toFixed(2)}s</h2>`;
+        }
+      }, 800);
+    }
+
+    simulateRace();
+  </script>
+</body>
+</html>
